@@ -4,15 +4,28 @@ import nltk
 nltk.download('punkt')
 
 from bs4 import BeautifulSoup
-
 DoNotCrawl = set()
 Visited = set()
 Commoners = dict()
 LongestPage = ('Link', 0)
 
 def scraper(url, resp):
+    global DoNotCrawl
     links = extract_next_links(url, resp)
     valids = [link for link in links if is_valid(link)] #list of valid links
+
+    if resp.status == 200:
+        if url not in DoNotCrawl:
+            wordsList = tokenize(resp)
+            isLongestPage(url, len(wordsList))
+            computeWordFrequencies(wordsList)
+        
+        commonWords() # writes the words from Commoners to common.txt (also see computeWordFrequencies for how Commoners is updated)
+        unique()
+
+    return valids
+
+
 
 
 def extract_next_links(url, resp):
