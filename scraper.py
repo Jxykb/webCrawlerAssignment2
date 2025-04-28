@@ -1,6 +1,7 @@
 import re
 from urllib.parse import urlparse
 import nltk
+nltk.download('punkt')
 
 from bs4 import BeautifulSoup
 
@@ -26,7 +27,7 @@ def extract_next_links(url, resp):
     # subdomainCheck(url)
 
     # url parser
-    
+
     soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
     links = soup.find_all('a', href=True)    
     for link in links:
