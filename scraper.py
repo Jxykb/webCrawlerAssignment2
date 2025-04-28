@@ -1,27 +1,33 @@
 import re
 from urllib.parse import urlparse
+import nltk
+nltk.download('punkt')
 
 from bs4 import BeautifulSoup
 
+DoNotCrawl = set()
+Visited = set()
+Commoners = dict()
+LongestPage = ('Link', 0)
+
 def scraper(url, resp):
     links = extract_next_links(url, resp)
-    return [link for link in links if is_valid(link)]
+    valids = [link for link in links if is_valid(link)] #list of valid links
+
 
 def extract_next_links(url, resp):
-    #this is a comment too
-    # Implementation required.
-    # url: the URL that was used to get the page
-    # resp.url: the actual url of the page
-    # resp.status: the status code returned by the server. 200 is OK, you got the page. Other numbers mean that there was some kind of problem.
-    # resp.error: when status is not 200, you can check the error here, if needed.
-    # resp.raw_response: this is where the page actually is. More specifically, the raw_response has two parts:
-    #         resp.raw_response.url: the url, again
-    #         resp.raw_response.content: the content of the page!
-    # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
-    list_of_links = []
+    global DoNotCrawl, Visited
 
-    if resp.status != 200 or resp.raw_response == None:
-        return list_of_links
+    if resp.status != 200 or url in DoNotCrawl or url in Visited or resp.raw_response == None:
+        DoNotCrawl.add(url)
+        return set()
+
+    Visited.add(url)
+
+    # subdomainCheck(url)
+
+    # url parser
+
     soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
     links = soup.find_all('a', href=True)    
     for link in links:
@@ -30,6 +36,58 @@ def extract_next_links(url, resp):
             list_of_links.append(href)
     return list_of_links
     # 
+
+def tokenize(resp):
+    soup = BeautifulSoup(resp.raw_response_content, "html.parser")
+    tokens = nltk.tokenize.word_tokenize(soup.get_text())
+    words = []
+    for token in tokens:
+        word = ""
+        for char in token:
+            if char.isalnum() and char.isascii():
+                word += char.lower()
+            else:
+                if word:
+                    words.append(word)
+                    word = ""
+        if word: words.append(word)
+    return words
+
+def computeWordFrequencies(tokenList):
+    global Commoners
+    stopWords = [
+        "a", "about", "above", "after", "again", "against", "all", "am", "an", "and", "any", "are", "aren", "t", "as", "at", "be", "because", "been", "before", "being", "below", "between", "both", "but", "by", "can", "cannot", "could", "couldn", "did", "didn", "do", "does", "doesn", "doing", "don", "down", "during", "each", "few", "for", "from", "further", "had", "hadn", "has", "hasn", "have", "haven", "having", "he", "d", "ll", "s", "her", "here", "hers", "herself", "him", "himself", "his", "how", "i", "m", "ve", "if", "in", "into", "is", "isn", "it", "its", "itself", "let", "me", "more", "most", "mustn", "my", "myself", "no", "nor", "not", "of", "off", "on", "once", "only", "or", "other", "ought", "our", "ours", "ourselves", "out", "over", "own", "same", "shan", "she", "should", "shouldn", "so", "some", "such", "than", "that", "the", "their", "theirs", "them", "themselves", "then", "there", "these", "they", "re", "ve", "this", "those", "through", "to", "too", "under", "until", "up", "very", "was", "wasn", "we", "were", "weren", "what", "when", "where", "which", "while", "who", "whom", "why", "with", "won", "would", "wouldn", "you", "your", "yours", "yourself", "yourselves"
+    ]
+
+    for token in tokenList:
+        if token not in stopWords and token.isalpha():
+            Commoners[token] += 1
+
+def isLongestPage(url, lengthOfPage):
+    global LongestPage
+    if LongestPage[1] < lengthOfPage:
+        LongestPage = (url, lengthOfPage)
+    
+    with open("longest.txt", "w") as file:
+        file.write(f'URL: {LongestPage[0]} --> Word count of {LongestPage[1]}\n')
+
+def unique():
+    global Visited
+    with open("unique.txt", "w") as file:
+        file.write(f'Unique Pages -> {len(Visited)}')
+
+def subdomainCheck():
+    pass
+
+def commonWords():
+    #global Commoners
+    with open("commoners.txt", "w") as file:
+        string = ''
+        for count, kv in enumerate(sorted(Commoners.items(), key=(lambda x: x[1]), reverse=True)[:50]):
+            string += f'{count+1:02}, {kv[0]} - {kv[1]}\n'
+        file.write(string)
+
+
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
