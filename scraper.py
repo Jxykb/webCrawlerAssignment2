@@ -8,6 +8,7 @@ def scraper(url, resp):
     return [link for link in links if is_valid(link)]
 
 def extract_next_links(url, resp):
+    #this is a comment too
     # Implementation required.
     # url: the URL that was used to get the page
     # resp.url: the actual url of the page
@@ -38,10 +39,10 @@ def is_valid(url):
         parsed = urlparse(url)
         if parsed.scheme not in set(["http", "https"]):
             return False
-
+        
         if parsed.netloc not in set(["ics.uci.edu/", "cs.uci.edu", "stat.uci.edu", "today.uci.edu", "informatics.uci.edu/"]):
             return False
-        
+
         if parsed.netloc == "today.uci.edu" and parsed.path != "/department/information_computer_sciences/":
             return False
 
