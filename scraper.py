@@ -29,7 +29,7 @@ def longestPageWrite():
 def subdomainWrite():
     #global Subdomain
     with open("subdomain_list.txt", "w") as f:
-        file_string = 'Number of Subdomains (in ics.uci.edu): ' + str(len(Subdomain)) + "\n"
+        file_string = 'Number of Subdomains (in uci.edu): ' + str(len(Subdomain)) + "\n"
         for kv in sorted(Subdomain):
             file_string += f'{kv}, {Subdomain[kv]}\n'
         f.write(file_string)
