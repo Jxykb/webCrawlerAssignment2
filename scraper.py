@@ -1,13 +1,18 @@
 import re
 from urllib.parse import urlparse
+from urllib.parse import urljoin
+
+from bs4 import BeautifulSoup
+
 import nltk
 nltk.download('punkt')
 
-from bs4 import BeautifulSoup
+
 DoNotCrawl = set()
 Visited = set()
 Commoners = dict()
 LongestPage = ('Link', 0)
+Subdomain = dict()
 
 def scraper(url, resp):
     global DoNotCrawl
@@ -22,10 +27,9 @@ def scraper(url, resp):
         
         commonWords() # writes the words from Commoners to common.txt (also see computeWordFrequencies for how Commoners is updated)
         unique()
+        subdomainWrite()
 
     return valids
-
-
 
 
 def extract_next_links(url, resp):
@@ -37,22 +41,37 @@ def extract_next_links(url, resp):
 
     Visited.add(url)
 
-    # subdomainCheck(url)
+    subdomainCheck(url)
 
     # url parser
+    parsed = urlparse(url)
 
     soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
+    '''
+    sentences = soup.getText().split('.')
+    if not sentenceReps(sentences, #):
+        DoNotCrawl.add(url)
+        return set()
+    '''
+    list_of_links = set()
+
     links = soup.find_all('a', href=True)    
     for link in links:
         href = link.get('href')
+        if parsed.netloc:
+            href = urljoin(url, href) #check urljoin
+        #checking for same links but fragmented with #
+        href = href.split("#")[0]
+        # maybe have to check for archive, evoke, swiki (185)
         if is_valid(href):
-            list_of_links.append(href)
+            list_of_links.add(href)
     return list_of_links
 
 def tokenize(resp):
-    soup = BeautifulSoup(resp.raw_response_content, "html.parser")
+    soup = BeautifulSoup(resp.raw_response.content, "html.parser")
     tokens = nltk.tokenize.word_tokenize(soup.get_text())
-    words = []
+    words = [t.lower() for t in tokens if not re.match(r'[\W]+',t)]
+    '''
     for token in tokens:
         word = ""
         for char in token:
@@ -63,6 +82,7 @@ def tokenize(resp):
                     words.append(word)
                     word = ""
         if word: words.append(word)
+    '''
     return words
 
 def computeWordFrequencies(tokenList):
@@ -75,24 +95,45 @@ def computeWordFrequencies(tokenList):
         if token not in stopWords and token.isalpha():
             Commoners[token] += 1
 
+def wordCount(resp):
+    tokens = tokenize(resp)
+    return len(tokens) < 150
+
 def isLongestPage(url, lengthOfPage):
     global LongestPage
     if LongestPage[1] < lengthOfPage:
         LongestPage = (url, lengthOfPage)
     
-    with open("longest.txt", "w") as file:
-        file.write(f'URL: {LongestPage[0]} --> Word count of {LongestPage[1]}\n')
+        with open("longest.txt", "w") as file:
+            file.write(f'URL: {LongestPage[0]} --> Word count of {LongestPage[1]}\n')
+
+def subdomainCheck(url):
+    global Subdomain
+    if(url.find(".uci.edu") == -1):
+        return
+    pattern = r'https?://(.*)\.uci\.edu'
+    subdomain = re.search(pattern, url).group(1).lower()
+    if subdomain == 'www':
+        return
+    Subdomain['https://' + subdomain + 'uci.edu'] += 1
+
+def subdomainWrite():
+    global Subdomain
+    with open("subdomain.txt", "w") as file:
+        string = "Number of subdomains in uci.edu: " + str(len(Subdomain)) + "\n"
+        for item in sorted(Subdomain):
+            string += f'{item}, {Subdomain[item]}\n'
+        file.write(string)
 
 def unique():
     global Visited
     with open("unique.txt", "w") as file:
         file.write(f'Unique Pages -> {len(Visited)}')
 
-def subdomainCheck():
-    pass
+
 
 def commonWords():
-    #global Commoners
+    global Commoners
     with open("commoners.txt", "w") as file:
         string = ''
         for count, kv in enumerate(sorted(Commoners.items(), key=(lambda x: x[1]), reverse=True)[:50]):
@@ -105,6 +146,11 @@ def is_valid(url):
     # Decide whether to crawl this url or not. 
     # If you decide to crawl it, return True; otherwise return False.
     # There are already some conditions that return False.
+    global DoNotCrawl, Visited
+
+    if url in Visited or url in DoNotCrawl:
+        return False
+
     try:
         parsed = urlparse(url)
         if parsed.scheme not in set(["http", "https"]):
@@ -129,3 +175,4 @@ def is_valid(url):
     except TypeError:
         print ("TypeError for ", parsed)
         raise
+
