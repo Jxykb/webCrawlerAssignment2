@@ -14,7 +14,7 @@ Subdomain = dict()
 LongestPage = ('Link', 0)
 
 def scraper(url, resp):
-    #global DoNotCrawl
+    global DoNotCrawl
     links = extract_next_links(url, resp)
     valids = [link for link in links if is_valid(link)] #list of valid links
 
@@ -31,7 +31,7 @@ def scraper(url, resp):
     return valids
 
 def commonWordsWrite():
-    #global Commoners
+    global Commoners
     with open("commoners.txt", "w") as file:
         string = ''
         for count, item in enumerate(sorted(Commoners.items(), key=(lambda x: x[1]), reverse=True)[:50]):
@@ -43,7 +43,7 @@ def longestPageCheck(url, lengthOfPage):
     if LongestPage[1] < lengthOfPage:
         LongestPage = (url, lengthOfPage)
 def longestPageWrite():
-    #global LongestPage
+    global LongestPage
     with open("longest.txt", "w") as file:
         file.write(f'URL: {LongestPage[0]} --> Word count of {LongestPage[1]}\n')
 
@@ -113,14 +113,14 @@ def computeWordFrequencies(tokenList):
                 Commoners[token] += 1
 def wordCountCheck(resp):
     tokens = tokenize(resp)
-    return len(tokens) < 150 or len(tokens) > 7500
+    return len(tokens) < 10
     #    return True
     #return False
 
 def extract_next_links(url, resp):
     global DoNotCrawl, Visited
 
-    if resp.status != 200 or url in DoNotCrawl or url in Visited or resp.raw_response == None:
+    if resp.status != 200 or url in Visited or resp.raw_response == None:
         DoNotCrawl.add(url)
         return set()
 
@@ -132,7 +132,16 @@ def extract_next_links(url, resp):
         return set()
 
     list_of_links = set()
-    soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
+    
+    try:
+        html = resp.raw_response.content.decode('utf-8', errors='replace')
+    except Exception as e:
+        print(f"[!] Failed to decode {url}: {e}")
+        DoNotCrawl.add(url)
+        return set()
+
+    soup = BeautifulSoup(html, "html.parser")
+
     links = soup.find_all('a', href=True)    
 
     for link in links:
@@ -142,6 +151,7 @@ def extract_next_links(url, resp):
         href = href.split('#')[0]
         if is_valid(href):
             list_of_links.add(href)
+    print(f"Extracted {len(list_of_links)} links from {url}")
     return list_of_links
 
 def is_valid(url):
@@ -157,9 +167,14 @@ def is_valid(url):
     try:
         parsed = urlparse(url)
         if parsed.scheme not in set(["http", "https"]):
+ 
             return False
         
-        if parsed.netloc not in set(["www.ics.uci.edu/", "www.cs.uci.edu", "www.stat.uci.edu", "www.today.uci.edu", "www.informatics.uci.edu/"]):
+        if parsed.netloc not in set(["www.ics.uci.edu", "www.cs.uci.edu", "www.stat.uci.edu", "www.informatics.uci.edu"]):
+            return False
+
+        if not parsed.netloc.endswith("uci.edu"):
+            #print(f"Rejected (outside domain): {url}")
             return False
 
         if parsed.netloc == "www.today.uci.edu" and parsed.path != "/department/information_computer_sciences/":

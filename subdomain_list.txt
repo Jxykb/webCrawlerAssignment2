@@ -1,4 +1,5 @@
-Number of Subdomains (in uci.edu): 3
+Number of Subdomains (in uci.edu): 4
 http://www.cs.uci.edu, 2
-http://www.stat.uci.edu, 265
-http://www.stat.uci.edu/wp-login.php?redirect_to=https%3a%2f%2fwww.stat.uci.edu, 2
+http://www.ics.uci.edu, 862
+http://www.informatics.uci.edu, 435
+http://www.stat.uci.edu, 41
