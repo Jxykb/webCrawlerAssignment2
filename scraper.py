@@ -29,7 +29,7 @@ def longestPageWrite():
 def subdomainWrite():
     #global Subdomain
     with open("subdomain_list.txt", "w") as f:
-        file_string = 'Number of Subdomains (in ics.uci.edu): ' + str(len(Subdomain)) + "\n"
+        file_string = 'Number of Subdomains (in uci.edu): ' + str(len(Subdomain)) + "\n"
         for kv in sorted(Subdomain):
             file_string += f'{kv}, {Subdomain[kv]}\n'
         f.write(file_string)
@@ -39,10 +39,12 @@ def subdomain_update(url):
     if(".uci.edu" not in url):
         return
     pattern = r'https?://(.*)\.uci\.edu'
-    subdomain_str = re.search(pattern, url).group(1).lower()                        
+    match = re.search(pattern, url)
+    if not match:
+        return
+    subdomain_str = match.group(1).lower()                        
     if subdomain_str == 'www':
         return 
-
     key = 'http://' + subdomain_str + '.uci.edu'
     if key in Subdomain:
         Subdomain[key] += 1
@@ -72,11 +74,11 @@ def scraper(url, resp):
 
     return valids
 
-
-
 def tokenize(resp):
     soup = BeautifulSoup(resp.raw_response.content, "html.parser")
-    tokens = nltk.tokenize.word_tokenize(soup.get_text())
+    text = soup.get_text()
+    tokens = nltk.tokenize.word_tokenize(text)
+
     words = []
     for token in tokens:
         word = ""
@@ -106,6 +108,14 @@ def computeWordFrequencies(tokenList):
                 Commoners[token] = 1
             else:
                 Commoners[token] += 1
+
+def wordcount_check(resp):
+    word_tokens = tokenize(resp)
+
+    word_count = len(word_tokens)
+    if word_count < 150 or word_count > 100000:
+        return True
+    return False
 
 def extract_next_links(url, resp):
     global DoNotCrawl, Visited
@@ -148,15 +158,24 @@ def is_valid(url):
     global DoNotCrawl, Visited
     try:
         parsed = urlparse(url)
+
         if parsed.scheme not in set(["http", "https"]):
             return False
+    
+        if parsed in Visited:
+            return False
         
-        if parsed.netloc not in set(["www.ics.uci.edu/", "www.cs.uci.edu", "www.stat.uci.edu", "www.today.uci.edu", "www.informatics.uci.edu/"]):
+       
+
+        domain = parsed.netloc.lower()
+        path = parsed.path.lower() or '/'
+
+        if not(domain.endswith(".ics.uci.edu") or domain.endswith(".cs.uci.edu") or 
+        domain.endswith(".informatics.uci.edu") or domain.endswith(".stat.uci.edu") or 
+        (domain == "today.uci.edu" and path.startswith("/department/information_computer_sciences/"))):
             return False
 
-        if parsed.netloc == "www.today.uci.edu" and parsed.path != "/department/information_computer_sciences/":
-            return False
-
+        #add svg?
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
@@ -166,13 +185,8 @@ def is_valid(url):
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv"
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
-
+        
     except TypeError:
         print ("TypeError for ", parsed)
         raise
 
-def wordcount_check(resp):
-    word_tokens = tokenize(resp)
-    if len(word_tokens) < 150 or len(word_tokens) > 7500:
-        return True
-    return False
