@@ -1,8 +1,2 @@
-Number of Subdomains (in uci.edu): 7
-http://acoi.ics.uci.edu, 40
-http://graphics.ics.uci.edu, 7
-http://graphmod.ics.uci.edu, 1
-http://sli.ics.uci.edu, 106
-http://tad.ics.uci.edu, 3
-http://www.graphics.ics.uci.edu, 7
-http://www.ics.uci.edu, 97
+Number of Subdomains (in ics.uci.edu): 1
+http://sli.ics.uci.edu, 38
