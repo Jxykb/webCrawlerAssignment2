@@ -108,3 +108,8 @@ venv.bak/
 
 *.full.py
 *.shelve
+
+#some odd files
+*.bak
+*.dat
+*.dir
