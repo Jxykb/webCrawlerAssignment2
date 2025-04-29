@@ -20,7 +20,7 @@ def scraper(url, resp):
 
     if resp.status == 200 and url not in DoNotCrawl:
         word_token_list = tokenize(resp)       
-        check_longest_page(url, len(word_token_list))   
+        longestPageCheck(url, len(word_token_list))   
         computeWordFrequencies(word_token_list)
 
         commonWordsWrite()
@@ -51,7 +51,7 @@ def longestPageWrite():
 def similar(hash1, hash2):
     count = 0
     for h1, h2 in zip(hash1, hash2):
-        if h1 == h2
+        if h1 == h2:
             count += 1
     return count / 160 #or other number depending on hash used
 
@@ -62,7 +62,10 @@ def subdomainUpdate(url):
     if(".uci.edu" not in url):
         return
     pattern = r'https?://(.*)\.uci\.edu'
-    subdomain_str = re.search(pattern, url).group(1).lower()                        
+    match_string = re.search(pattern, url)
+    if match_string:
+        subdomain_str = match_string.group(1).lower() 
+    else: return                       
     if subdomain_str == 'www':
         return
     key = 'http://' + subdomain_str + '.uci.edu'
