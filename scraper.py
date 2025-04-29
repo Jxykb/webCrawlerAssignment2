@@ -5,54 +5,13 @@ import nltk
 nltk.download('punkt')
 nltk.download('punkt_tab')
 
+from bs4 import BeautifulSoup
 
 DoNotCrawl = set()
 Visited = set()
 Commoners = dict()
 Subdomain = dict()
 LongestPage = ('Link', 0)
-
-def commonWordsWrite():
-    #global Commoners
-    with open("commoners.txt", "w") as file:
-        string = ''
-        for count, kv in enumerate(sorted(Commoners.items(), key=(lambda x: x[1]), reverse=True)[:50]):
-            string += f'{count+1:02}, {kv[0]} - {kv[1]}\n'
-        file.write(string)
-
-def longestPageWrite():
-    #global LongestPage
-    with open("longest.txt", "w") as file:
-        file.write(f'URL: {LongestPage[0]} --> Word count of {LongestPage[1]}\n')
-
-def subdomainWrite():
-    #global Subdomain
-    with open("subdomain_list.txt", "w") as f:
-        file_string = 'Number of Subdomains (in uci.edu): ' + str(len(Subdomain)) + "\n"
-        for kv in sorted(Subdomain):
-            file_string += f'{kv}, {Subdomain[kv]}\n'
-        f.write(file_string)
-
-def subdomain_update(url):
-    global Subdomain
-    if(".uci.edu" not in url):
-        return
-    pattern = r'https?://(.*)\.uci\.edu'
-    subdomain_str = re.search(pattern, url).group(1).lower()                        
-    if subdomain_str == 'www':
-        return 
-
-    key = 'http://' + subdomain_str + '.uci.edu'
-    if key in Subdomain:
-        Subdomain[key] += 1
-    else:
-        Subdomain[key] = 1
-
-
-def uniqueWrite():
-    #global Visited
-    with open("unique.txt", "w") as file:
-        file.write(f'Unique Pages -> {len(Visited)}')
 
 def scraper(url, resp):
     #global DoNotCrawl
@@ -71,10 +30,60 @@ def scraper(url, resp):
 
     return valids
 
+def commonWordsWrite():
+    #global Commoners
+    with open("commoners.txt", "w") as file:
+        string = ''
+        for count, item in enumerate(sorted(Commoners.items(), key=(lambda x: x[1]), reverse=True)[:50]):
+            string += f'{count+1}, {item[0]} --> {item[1]}\n'
+        file.write(string)
 
+def longestPageCheck(url, lengthOfPage):
+    global LongestPage
+    if LongestPage[1] < lengthOfPage:
+        LongestPage = (url, lengthOfPage)
+def longestPageWrite():
+    #global LongestPage
+    with open("longest.txt", "w") as file:
+        file.write(f'URL: {LongestPage[0]} --> Word count of {LongestPage[1]}\n')
+
+'''
+def similar(hash1, hash2):
+    count = 0
+    for h1, h2 in zip(hash1, hash2):
+        if h1 == h2
+            count += 1
+    return count / 160 #or other number depending on hash used
+
+'''
+
+def subdomainUpdate(url):
+    global Subdomain
+    if(".uci.edu" not in url):
+        return
+    pattern = r'https?://(.*)\.uci\.edu'
+    subdomain_str = re.search(pattern, url).group(1).lower()                        
+    if subdomain_str == 'www':
+        return
+    key = 'http://' + subdomain_str + '.uci.edu'
+    if key in Subdomain:
+        Subdomain[key] += 1
+    else:
+        Subdomain[key] = 1
+def subdomainWrite():
+    #global Subdomain
+    with open("subdomain_list.txt", "w") as file:
+        string = 'Number of Subdomains (in uci.edu): ' + str(len(Subdomain)) + "\n"
+        for item in sorted(Subdomain):
+            string += f'{item}, {Subdomain[item]}\n'
+        file.write(string)
+
+def uniqueWrite():
+    #global Visited
+    with open("unique.txt", "w") as file:
+        file.write(f'Unique Pages -> {len(Visited)}')
 
 def tokenize(resp):
-    soup = BeautifulSoup(resp.raw_response.content, "html.parser")
     soup = BeautifulSoup(resp.raw_response.content, "html.parser")
     tokens = nltk.tokenize.word_tokenize(soup.get_text())
     words = [t.lower() for t in tokens if not re.match(r'[\W]+',t)]
@@ -91,12 +100,6 @@ def tokenize(resp):
         if word: words.append(word)
     '''
     return words
-
-def check_longest_page(url, lengthOfPage):
-    global LongestPage
-    if LongestPage[1] < lengthOfPage:
-        LongestPage = (url, lengthOfPage)
-
 def computeWordFrequencies(tokenList):
     global Commoners
     stopWords = [
@@ -108,6 +111,11 @@ def computeWordFrequencies(tokenList):
                 Commoners[token] = 1
             else:
                 Commoners[token] += 1
+def wordCountCheck(resp):
+    tokens = tokenize(resp)
+    return len(tokens) < 150 or len(tokens) > 7500
+    #    return True
+    #return False
 
 def extract_next_links(url, resp):
     global DoNotCrawl, Visited
@@ -117,12 +125,9 @@ def extract_next_links(url, resp):
         return set()
 
     Visited.add(url)
+    subdomainUpdate(url)
 
-    subdomain_update(url)
-
-    # url parser
-
-    if wordcount_check(resp):
+    if wordCountCheck(resp):
         DoNotCrawl.add(url)
         return set()
 
@@ -132,12 +137,9 @@ def extract_next_links(url, resp):
 
     for link in links:
         href = link.get('href')
-
         if urlparse(url).netloc:
             href = urljoin(url, href)
-
         href = href.split('#')[0]
-
         if is_valid(href):
             list_of_links.add(href)
     return list_of_links
@@ -148,6 +150,10 @@ def is_valid(url):
     # There are already some conditions that return False.
 
     global DoNotCrawl, Visited
+
+    if url in DoNotCrawl or url in Visited:
+        return False
+
     try:
         parsed = urlparse(url)
         if parsed.scheme not in set(["http", "https"]):
@@ -172,9 +178,3 @@ def is_valid(url):
     except TypeError:
         print ("TypeError for ", parsed)
         raise
-
-def wordcount_check(resp):
-    word_tokens = tokenize(resp)
-    if len(word_tokens) < 150 or len(word_tokens) > 7500:
-        return True
-    return False
