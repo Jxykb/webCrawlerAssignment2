@@ -20,7 +20,7 @@ def scraper(url, resp):
 
     if resp.status == 200 and url not in DoNotCrawl:
         word_token_list = tokenize(resp)       
-        check_longest_page(url, len(word_token_list))   
+        longestPageCheck(url, len(word_token_list))   
         computeWordFrequencies(word_token_list)
 
         commonWordsWrite()
