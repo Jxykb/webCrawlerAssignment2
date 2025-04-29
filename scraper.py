@@ -14,7 +14,6 @@ Subdomain = dict()
 LongestPage = ('Link', 0)
 
 def scraper(url, resp):
-    #global DoNotCrawl
     links = extract_next_links(url, resp)
     valids = [link for link in links if is_valid(link)] #list of valid links
 
@@ -31,7 +30,6 @@ def scraper(url, resp):
     return valids
 
 def commonWordsWrite():
-    #global Commoners
     with open("commoners.txt", "w") as file:
         string = ''
         for count, item in enumerate(sorted(Commoners.items(), key=(lambda x: x[1]), reverse=True)[:50]):
@@ -43,7 +41,6 @@ def longestPageCheck(url, lengthOfPage):
     if LongestPage[1] < lengthOfPage:
         LongestPage = (url, lengthOfPage)
 def longestPageWrite():
-    #global LongestPage
     with open("longest.txt", "w") as file:
         file.write(f'URL: {LongestPage[0]} --> Word count of {LongestPage[1]}\n')
 
@@ -74,7 +71,6 @@ def subdomainUpdate(url):
     else:
         Subdomain[key] = 1
 def subdomainWrite():
-    #global Subdomain
     with open("subdomain_list.txt", "w") as file:
         string = 'Number of Subdomains (in uci.edu): ' + str(len(Subdomain)) + "\n"
         for item in sorted(Subdomain):
@@ -82,7 +78,6 @@ def subdomainWrite():
         file.write(string)
 
 def uniqueWrite():
-    #global Visited
     with open("unique.txt", "w") as file:
         file.write(f'Unique Pages -> {len(Visited)}')
 
