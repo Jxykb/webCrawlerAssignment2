@@ -168,7 +168,7 @@ def extract_next_links(url, resp):
         tokens = tokenize(resp)
         length_of_page = len(tokens)
         LONGEST_PAGECheck(url, length_of_page)
-        if length_of_page < 200 or length_of_page > 50000:
+        if length_of_page < 200 or length_of_page > 25000:
             DONOTCRAWL.add(curr_url)
             return list_of_links
 
@@ -218,7 +218,7 @@ def is_valid(url):
             'ical=', 'outlook-ical', 'eventdisplay=past', 'tribe-bar-date', 'action=', 'share=', 'swiki',
             'calendar', 'event', 'events', '/?page=', '/?year=', '/?month=', '/?day=', '/?view=archive',
             '/?sort=', 'sessionid=', 'utm_', 'replytocom=', '/html_oopsc/', '/risc/v063/html_oopsc/a\\d+\\.html',
-            '/doku', '/files/', '/papers/', '/publications/', '/pub/', 'wp-login.php'
+            '/doku', '/files/', '/papers/', '/publications/', '/pub/', 'wp-login.php', '?do=edit', '?do=diff','?rev='
         ]
         lowered_url = url.lower()
         # If any trap keyword is found, reject the URL and add to DONOTCRAWL
@@ -252,8 +252,9 @@ def is_valid(url):
             + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
             + r"|epub|dll|cnf|tgz|sha1|thmx|mso|arff|rtf|jar|csv"
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz"
-            + r"|apk|bak|tmp|log|db|mdb|manifest|map|lock"
-            + r"|sql|img|svg|heic|webp|bam|xml|ff)$", parsed.path.lower()):
+            + r"|apk|bak|tmp|log|db|mdb|manifest|map|lock|java|py"
+            + r"|sql|img|svg|heic|webp|bam|xml|ff|png|pfd|ps\.z|pix"
+            + r"|ppxs|mol)$", parsed.path.lower()):
             DONOTCRAWL.add(url)
             return False
 
