@@ -1,2 +1,20 @@
 Subdomains and their page counts:
 --------------------------------
+<<<<<<< HEAD
+=======
+http://code.ics.uci.edu: 9
+http://courselisting.ics.uci.edu: 2
+http://cs.ics.uci.edu: 6
+http://dgillen.ics.uci.edu: 12
+http://jgarcia.ics.uci.edu: 29
+http://mcs.ics.uci.edu: 3
+http://mhcid.ics.uci.edu: 20
+http://mswe.ics.uci.edu: 3
+http://oai.ics.uci.edu: 1
+http://seal.ics.uci.edu: 1
+http://statconsulting.ics.uci.edu: 1
+http://ugradforms.ics.uci.edu: 1
+http://www.ics.uci.edu: 31
+http://www.informatics.uci.edu: 5
+http://www.stat.uci.edu: 5
+>>>>>>> origin/Jakob
