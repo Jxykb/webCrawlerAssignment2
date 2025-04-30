@@ -109,7 +109,7 @@ venv.bak/
 *.full.py
 *.shelve
 
-#some odd files
+#shelve files
 *.bak
 *.dat
 *.dir
