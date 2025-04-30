@@ -1,6 +1,7 @@
 import re
 from urllib.parse import urlparse
 from urllib.parse import urljoin
+from urllib.parse import urldefrag
 import nltk
 import gc
 
@@ -44,6 +45,7 @@ def longestPageCheck(url, lengthOfPage):
     global LongestPage
     if LongestPage[1] < lengthOfPage:
         LongestPage = (url, lengthOfPage)
+
 def longestPageWrite():
     global LongestPage
     with open("longest.txt", "w") as file:
@@ -86,26 +88,30 @@ def uniqueWrite():
         file.write(f'Unique Pages -> {len(Visited)}')
 
 def tokenize(resp):
-    soup = BeautifulSoup(resp.raw_response.content, "html.parser")
-    tokens = nltk.tokenize.word_tokenize(soup.get_text())
-    words = [t.lower() for t in tokens if not re.match(r'[\W]+',t)]
-    '''
-    for token in tokens:
-        word = ""
-        for char in token:
-            if char.isalnum() and char.isascii():
-                word += char.lower()
-            else:
-                if word:
-                    words.append(word)
-                    word = ""
-        if word: words.append(word)
-    '''
-    return words
+    try:
+        soup = BeautifulSoup(resp.raw_response.content, "html.parser")
+        text = soup.get_text()
+        tokens = nltk.tokenize.word_tokenize(text)
+        word_tokens = [t.lower() for t in tokens if re.match(r'^[a-zA-Z0-9]+$', t)]
+        return word_tokens
+    except AttributeError:
+        return []
+
 def computeWordFrequencies(tokenList):
     global Commoners
     stopWords = [
-        "a", "about", "above", "after", "again", "against", "all", "am", "an", "and", "any", "are", "aren", "t", "as", "at", "be", "because", "been", "before", "being", "below", "between", "both", "but", "by", "can", "cannot", "could", "couldn", "did", "didn", "do", "does", "doesn", "doing", "don", "down", "during", "each", "few", "for", "from", "further", "had", "hadn", "has", "hasn", "have", "haven", "having", "he", "d", "ll", "s", "her", "here", "hers", "herself", "him", "himself", "his", "how", "i", "m", "ve", "if", "in", "into", "is", "isn", "it", "its", "itself", "let", "me", "more", "most", "mustn", "my", "myself", "no", "nor", "not", "of", "off", "on", "once", "only", "or", "other", "ought", "our", "ours", "ourselves", "out", "over", "own", "same", "shan", "she", "should", "shouldn", "so", "some", "such", "than", "that", "the", "their", "theirs", "them", "themselves", "then", "there", "these", "they", "re", "ve", "this", "those", "through", "to", "too", "under", "until", "up", "very", "was", "wasn", "we", "were", "weren", "what", "when", "where", "which", "while", "who", "whom", "why", "with", "won", "would", "wouldn", "you", "your", "yours", "yourself", "yourselves"
+        "a", "about", "above", "after", "again", "against", "all", "am", "an", "and", 
+        "any", "are", "aren", "t", "as", "at", "be", "because", "been", "before", "being", 
+        "below", "between", "both", "but", "by", "can", "cannot", "could", "couldn", "did", "didn", 
+        "do", "does", "doesn", "doing", "don", "down", "during", "each", "few", "for", "from", "further", "had", 
+        "hadn", "has", "hasn", "have", "haven", "having", "he", "d", "ll", "s", "her", "here", "hers", "herself", 
+        "him", "himself", "his", "how", "i", "m", "ve", "if", "in", "into", "is", "isn", "it", "its", "itself", 
+        "let", "me", "more", "most", "mustn", "my", "myself", "no", "nor", "not", "of", "off", "on", "once", 
+        "only", "or", "other", "ought", "our", "ours", "ourselves", "out", "over", "own", "same", "shan", 
+        "she", "should", "shouldn", "so", "some", "such", "than", "that", "the", "their", "theirs", "them", 
+        "themselves", "then", "there", "these", "they", "re", "ve", "this", "those", "through", "to", "too", 
+        "under", "until", "up", "very", "was", "wasn", "we", "were", "weren", "what", "when", "where", "which", 
+        "while", "who", "whom", "why", "with", "won", "would", "wouldn", "you", "your", "yours", "yourself", "yourselves"
     ]
     for token in tokenList:
         if token not in stopWords and token.isalpha():
@@ -113,11 +119,10 @@ def computeWordFrequencies(tokenList):
                 Commoners[token] = 1
             else:
                 Commoners[token] += 1
+
 def wordCountCheck(resp):
     tokens = tokenize(resp)
-    return len(tokens) < 200
-    #    return True
-    #return False
+    return len(tokens) < 200 or len(tokens) > 50000
 
 def extract_next_links(url, resp):
     if resp.status != 200 or resp.raw_response is None:
@@ -156,62 +161,12 @@ def extract_next_links(url, resp):
                 found_links.add(full_url)
     except Exception as e:
         print(f"[!] BS4 error on {url}: {e}")
-    finally:
+    finally: #memory management
         del html
         del soup
         gc.collect()
 
     return found_links
-
-
-# def extract_next_links(url, resp):
-#     global DoNotCrawl, Visited
-
-#     if resp.status != 200 or url in Visited or resp.raw_response == None:
-#         DoNotCrawl.add(url)
-#         return set()
-
-#     content_type = resp.raw_response.headers.get('Content-Type', '')
-#     if 'text/html' not in content_type:
-#         print(f"[!] Skipping {url} — Non-HTML content: {content_type}")
-#         DoNotCrawl.add(url)
-#         return set()
-
-#     Visited.add(url)
-#     subdomainUpdate(url)
-
-#     if wordCountCheck(resp):
-#         DoNotCrawl.add(url)
-#         return set()
-
-#     list_of_links = set()
-    
-#     try:
-#         html = resp.raw_response.content.decode('utf-8', errors='replace')
-#     except Exception as e:
-#         print(f"[!] Failed to decode {url}: {e}")
-#         DoNotCrawl.add(url)
-#         return set()
-
-#     soup = BeautifulSoup(html, "html.parser")
-
-#     links = soup.find_all('a', href=True)    
-
-#     for link in links:
-#         href = link.get('href')
-#         if urlparse(url).netloc:
-#             href = urljoin(url, href)
-#         href = href.split('#')[0]
-#         if is_valid(href):
-#             list_of_links.add(href)
-#     print(f"Extracted {len(list_of_links)} links from {url}")
-
-#         # Free up memory
-#     del soup
-#     del html
-#     gc.collect()
-
-#     return list_of_links
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
@@ -226,17 +181,29 @@ def is_valid(url):
     try:
         parsed = urlparse(url)
         if parsed.scheme not in set(["http", "https"]):
- 
             return False
         
-        if parsed.netloc not in set(["www.ics.uci.edu", "www.cs.uci.edu", "www.stat.uci.edu", "www.informatics.uci.edu"]):
+        if parsed.netloc not in set(["www.ics.uci.edu", "www.cs.uci.edu", "www.stat.uci.edu", "www.informatics.uci.edu"]): #if url is not one of the subdomains
             return False
 
-        if not parsed.netloc.endswith("uci.edu"):
-            #print(f"Rejected (outside domain): {url}")
+        if not parsed.netloc.endswith("uci.edu"): #if url is outside of domain
+            return False
+        
+        noFragUrl, _ = defrag(url)
+        if noFragUrl in Visited or noFragUrl in DoNotCrawl: #if same url has fragment, dont crawl it
             return False
 
-        if parsed.netloc == "www.today.uci.edu" and parsed.path != "/department/information_computer_sciences/":
+        # General traps
+        trap_keywords = [
+            'ical=', 'outlook-ical', 'eventdisplay=past', 'tribe-bar-date', 'action=', 'share=', 'swiki',
+            'calendar', 'event', 'events', '/?page=', '/?year=', '/?month=', '/?day=', '/?view=archive',
+            '/?sort=', 'sessionid=', 'utm_', 'replytocom=', '/html_oopsc/', '/risc/v063/html_oopsc/a\\d+\\.html',
+            '/doku', '/files/', '/papers/', '/publications/', '/pub/', 'wp-login.php', '?do=edit', '?do=diff','?rev='
+        ]
+        lowered_url = url.lower()
+        # If any trap keyword is found, reject the URL and add to DONOTCRAWL
+        if any(keyword in lowered_url for keyword in trap_keywords):
+            DoNotCrawl.add(url)
             return False
 
         return not re.match(
