@@ -4,6 +4,9 @@ from urllib.parse import urljoin
 from urllib.parse import urldefrag
 import nltk
 import gc
+from collections import Counter
+
+
 
 nltk.download('punkt')
 nltk.download('punkt_tab')
