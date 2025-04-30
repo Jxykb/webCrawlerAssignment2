@@ -115,7 +115,7 @@ def computeWordFrequencies(tokenList):
                 Commoners[token] += 1
 def wordCountCheck(resp):
     tokens = tokenize(resp)
-    return len(tokens) < 10
+    return len(tokens) < 200
     #    return True
     #return False
 
