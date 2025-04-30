@@ -1,1 +1,1 @@
-URL: https://www.stat.uci.edu/covid19/incidence-maps.html --> Word count of 6418
+URL: http://www.ics.uci.edu/~fielding/pubs/dissertation/rest_arch_style.htm --> Word count of 7019

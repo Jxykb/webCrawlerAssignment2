@@ -14,13 +14,19 @@ Subdomain = dict()
 LongestPage = ('Link', 0)
 
 def scraper(url, resp):
+    if resp.status == 404:
+        DoNotCrawl.add(url)
+        with open("404_log.txt", "a") as f:
+            f.write(f"{url}\n")
+        return [] #stop if it's 404
+
     #global DoNotCrawl
     links = extract_next_links(url, resp)
     valids = [link for link in links if is_valid(link)] #list of valid links
 
     if resp.status == 200 and url not in DoNotCrawl:
         word_token_list = tokenize(resp)       
-        check_longest_page(url, len(word_token_list))   
+        longestPageCheck(url, len(word_token_list))   
         computeWordFrequencies(word_token_list)
 
         commonWordsWrite()
@@ -84,22 +90,17 @@ def uniqueWrite():
         file.write(f'Unique Pages -> {len(Visited)}')
 
 def tokenize(resp):
-    soup = BeautifulSoup(resp.raw_response.content, "html.parser")
-    tokens = nltk.tokenize.word_tokenize(soup.get_text())
-    words = [t.lower() for t in tokens if not re.match(r'[\W]+',t)]
-    '''
-    for token in tokens:
-        word = ""
-        for char in token:
-            if char.isalnum() and char.isascii():
-                word += char.lower()
-            else:
-                if word:
-                    words.append(word)
-                    word = ""
-        if word: words.append(word)
-    '''
-    return words
+    try:
+        html = resp.raw_response.content.decode('utf-8', errors='replace') # Decode with utf-8, if seeing weird character
+        soup = BeautifulSoup(html, "html.parser") #tree structure for extract content.
+        tokens = nltk.tokenize.word_tokenize(soup.get_text()) # split word
+        words = [t.lower() for t in tokens if not re.match(r'[\W]+', t)] #convert split words to lower case
+        return words
+    except Exception as e:
+        print(f"Error tokenizing {resp.url}: {e}")
+        return [] #if something wrong, print a message and return empty list.
+
+
 def computeWordFrequencies(tokenList):
     global Commoners
     stopWords = [
@@ -156,10 +157,14 @@ def is_valid(url):
 
     try:
         parsed = urlparse(url)
+        trap_keywords = ["calendar", "page=", "start=", "offset=", "sort="]
+        if any(keyword in url.lower() for keyword in trap_keywords):
+            return False
+
         if parsed.scheme not in set(["http", "https"]):
             return False
         
-        if parsed.netloc not in set(["www.ics.uci.edu/", "www.cs.uci.edu", "www.stat.uci.edu", "www.today.uci.edu", "www.informatics.uci.edu/"]):
+        if parsed.netloc not in set(["www.ics.uci.edu", "www.cs.uci.edu", "www.stat.uci.edu", "www.today.uci.edu", "www.informatics.uci.edu"]):
             return False
 
         if parsed.netloc == "www.today.uci.edu" and parsed.path != "/department/information_computer_sciences/":
