@@ -217,8 +217,8 @@ def is_valid(url):
             'ical=', 'outlook-ical', 'eventdisplay=past', 'tribe-bar-date', 'action=', 'share=', 'swiki',
             'calendar', 'event', 'events', '/?page=', '/?year=', '/?month=', '/?day=', '/?view=archive',
             '/?sort=', 'sessionid=', 'utm_', 'replytocom=', '/html_oopsc/', '/risc/v063/html_oopsc/a\\d+\\.html',
-            '/doku', 'doku.php', '/files/', '/papers/', '/publications/', '/pub/', 'wp-login.php', 'login.php', '?do=edit', '?do=diff','?rev=',
-            '/seminarseries'
+            '/doku', 'doku.php', '/files/', '/papers/', '/publications/', '/pub/','wp-login.php', 'login.php', 
+            '?do=edit', '?do=diff','?rev=','/seminarseries'
         ]
         lowered_url = url.lower()
         # If any trap keyword is found, reject the URL and add to DONOTCRAWL
@@ -260,7 +260,7 @@ def is_valid(url):
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz"
             + r"|apk|bak|tmp|log|db|mdb|manifest|map|lock|java|py"
             + r"|sql|img|svg|heic|webp|bam|xml|ff|png|pfd|ps\.z|pix"
-            + r"|ppxs|mol|ppsx|sh)$", parsed.path.lower()):
+            + r"|ppxs|mol|ppsx|sh|apk|war)$", parsed.path.lower()):
             DONOTCRAWL.add(url)
             return False
 
