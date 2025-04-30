@@ -1,8 +1,0 @@
-Longest page by word count:
-<<<<<<< HEAD
-URL: Link
-Word count: 0
-=======
-URL: http://www.ics.uci.edu/~seal/publications.html
-Word count: 4710
->>>>>>> origin/Jakob

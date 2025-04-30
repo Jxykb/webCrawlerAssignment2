@@ -138,6 +138,13 @@ def extract_next_links(url, resp):
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
     global DONOTCRAWL, VISITED
     list_of_links = set()  
+
+
+    if resp.status == 404:
+        DONOTCRAWL.add(url)
+        with open("404_broken_link.txt", "a", encoding='utf-8') as f:
+            f.write(url + "\n")
+        return set()
     
     if resp.status != 200:
         DONOTCRAWL.add(url)
@@ -254,7 +261,7 @@ def is_valid(url):
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz"
             + r"|apk|bak|tmp|log|db|mdb|manifest|map|lock|java|py"
             + r"|sql|img|svg|heic|webp|bam|xml|ff|png|pfd|ps\.z|pix"
-            + r"|ppxs|mol)$", parsed.path.lower()):
+            + r"|ppxs|mol|zip)$", parsed.path.lower()):
             DONOTCRAWL.add(url)
             return False
 
