@@ -167,11 +167,10 @@ def extract_next_links(url, resp):
         subdomain_update(curr_url)
         tokens = tokenize(resp)
         length_of_page = len(tokens)
-        LONGEST_PAGECheck(url, length_of_page)
         if length_of_page < 200 or length_of_page > 25000:
             DONOTCRAWL.add(curr_url)
             return list_of_links
-
+        LONGEST_PAGECheck(url, length_of_page)
         computeWordFrequencies(tokens)
 
         for link in links:
@@ -218,7 +217,8 @@ def is_valid(url):
             'ical=', 'outlook-ical', 'eventdisplay=past', 'tribe-bar-date', 'action=', 'share=', 'swiki',
             'calendar', 'event', 'events', '/?page=', '/?year=', '/?month=', '/?day=', '/?view=archive',
             '/?sort=', 'sessionid=', 'utm_', 'replytocom=', '/html_oopsc/', '/risc/v063/html_oopsc/a\\d+\\.html',
-            '/doku', '/files/', '/papers/', '/publications/', '/pub/', 'wp-login.php', '?do=edit', '?do=diff','?rev='
+            '/doku', 'doku.php', '/files/', '/papers/', '/publications/', '/pub/', 'wp-login.php', 'login.php', '?do=edit', '?do=diff','?rev=',
+            '/seminarseries'
         ]
         lowered_url = url.lower()
         # If any trap keyword is found, reject the URL and add to DONOTCRAWL
@@ -234,6 +234,12 @@ def is_valid(url):
             if "timeline" in parsed.path and "from=" in parsed.query:
                 DONOTCRAWL.add(url)
                 return False
+
+        # Lost of pages with little info
+        if "~eppstein" in parsed.path:
+            if "pix" in parsed.path or "163" in parsed.path:
+                DONOTCRAWL.add(url)
+                return False            
 
         valid_domains = (".ics.uci.edu", ".cs.uci.edu", ".informatics.uci.edu", ".stat.uci.edu", ".today.uci.edu")
         
@@ -254,7 +260,7 @@ def is_valid(url):
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz"
             + r"|apk|bak|tmp|log|db|mdb|manifest|map|lock|java|py"
             + r"|sql|img|svg|heic|webp|bam|xml|ff|png|pfd|ps\.z|pix"
-            + r"|ppxs|mol)$", parsed.path.lower()):
+            + r"|ppxs|mol|ppsx|sh)$", parsed.path.lower()):
             DONOTCRAWL.add(url)
             return False
 
