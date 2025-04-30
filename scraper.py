@@ -2,6 +2,8 @@ import re
 from urllib.parse import urlparse
 from urllib.parse import urljoin
 import nltk
+import gc
+
 nltk.download('punkt')
 nltk.download('punkt_tab')
 
@@ -23,10 +25,10 @@ def scraper(url, resp):
         longestPageCheck(url, len(word_token_list))   
         computeWordFrequencies(word_token_list)
 
-        commonWordsWrite()
-        longestPageWrite()
-        subdomainWrite()
-        uniqueWrite()
+    commonWordsWrite()
+    longestPageWrite()
+    subdomainWrite()
+    uniqueWrite()
 
     return valids
 
@@ -118,47 +120,98 @@ def wordCountCheck(resp):
     #return False
 
 def extract_next_links(url, resp):
-    global DoNotCrawl, Visited
-
-    if resp.status != 200 or url in Visited or resp.raw_response == None:
+    if resp.status != 200 or resp.raw_response is None:
+        print(f"[!] Skipping {url} — Bad status or no response: {resp.status}")
         DoNotCrawl.add(url)
         return set()
 
-    content_type = resp.raw_response.headers.get('Content-Type', '')
+    content_type = resp.raw_response.headers.get('Content-Type', '').lower()
+
+    # Bail out immediately if not HTML before reading content
     if 'text/html' not in content_type:
         print(f"[!] Skipping {url} — Non-HTML content: {content_type}")
         DoNotCrawl.add(url)
         return set()
 
-    Visited.add(url)
-    subdomainUpdate(url)
-
-    if wordCountCheck(resp):
-        DoNotCrawl.add(url)
+    if url in Visited:
+        print(f"[i] Already visited {url}")
         return set()
 
-    list_of_links = set()
-    
     try:
         html = resp.raw_response.content.decode('utf-8', errors='replace')
     except Exception as e:
-        print(f"[!] Failed to decode {url}: {e}")
+        print(f"[!] Decode failed for {url}: {e}")
         DoNotCrawl.add(url)
         return set()
 
-    soup = BeautifulSoup(html, "html.parser")
+    Visited.add(url)
+    subdomainUpdate(url)
+    found_links = set()
 
-    links = soup.find_all('a', href=True)    
+    try:
+        soup = BeautifulSoup(html, "html.parser")
+        for tag in soup.find_all('a', href=True):
+            full_url = urljoin(url, tag['href'])
+            if is_valid(full_url):
+                found_links.add(full_url)
+    except Exception as e:
+        print(f"[!] BS4 error on {url}: {e}")
+    finally:
+        del html
+        del soup
+        gc.collect()
 
-    for link in links:
-        href = link.get('href')
-        if urlparse(url).netloc:
-            href = urljoin(url, href)
-        href = href.split('#')[0]
-        if is_valid(href):
-            list_of_links.add(href)
-    print(f"Extracted {len(list_of_links)} links from {url}")
-    return list_of_links
+    return found_links
+
+
+# def extract_next_links(url, resp):
+#     global DoNotCrawl, Visited
+
+#     if resp.status != 200 or url in Visited or resp.raw_response == None:
+#         DoNotCrawl.add(url)
+#         return set()
+
+#     content_type = resp.raw_response.headers.get('Content-Type', '')
+#     if 'text/html' not in content_type:
+#         print(f"[!] Skipping {url} — Non-HTML content: {content_type}")
+#         DoNotCrawl.add(url)
+#         return set()
+
+#     Visited.add(url)
+#     subdomainUpdate(url)
+
+#     if wordCountCheck(resp):
+#         DoNotCrawl.add(url)
+#         return set()
+
+#     list_of_links = set()
+    
+#     try:
+#         html = resp.raw_response.content.decode('utf-8', errors='replace')
+#     except Exception as e:
+#         print(f"[!] Failed to decode {url}: {e}")
+#         DoNotCrawl.add(url)
+#         return set()
+
+#     soup = BeautifulSoup(html, "html.parser")
+
+#     links = soup.find_all('a', href=True)    
+
+#     for link in links:
+#         href = link.get('href')
+#         if urlparse(url).netloc:
+#             href = urljoin(url, href)
+#         href = href.split('#')[0]
+#         if is_valid(href):
+#             list_of_links.add(href)
+#     print(f"Extracted {len(list_of_links)} links from {url}")
+
+#         # Free up memory
+#     del soup
+#     del html
+#     gc.collect()
+
+#     return list_of_links
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
@@ -187,13 +240,13 @@ def is_valid(url):
             return False
 
         return not re.match(
-            r".*\.(css|js|bmp|gif|jpe?g|ico"
-            + r"|png|tiff?|mid|mp2|mp3|mp4"
+            r".*\.(css|js|bmp|gif|jpe?g|ico|img"
+            + r"|png|tiff?|mid|mp2|mp3|mp4|txt"
             + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
             + r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names"
             + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
-            + r"|epub|dll|cnf|tgz|sha1"
-            + r"|thmx|mso|arff|rtf|jar|csv"
+            + r"|epub|dll|cnf|tgz|sha1|"
+            + r"|thmx|mso|arff|rtf|jar|csv|sql|apk|java|xml|c"
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
 
     except TypeError:
