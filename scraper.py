@@ -124,6 +124,12 @@ def extract_next_links(url, resp):
         DoNotCrawl.add(url)
         return set()
 
+    content_type = resp.raw_response.headers.get('Content-Type', '')
+    if 'text/html' not in content_type:
+        print(f"[!] Skipping {url} — Non-HTML content: {content_type}")
+        DoNotCrawl.add(url)
+        return set()
+
     Visited.add(url)
     subdomainUpdate(url)
 
