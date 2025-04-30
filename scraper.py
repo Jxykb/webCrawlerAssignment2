@@ -203,23 +203,48 @@ def is_valid(url):
 
     global DONOTCRAWL, VISITED
     try:
-        url, _ = urldefrag(url)
+        url, _ = urldefrag(url)  # Remove fragment
         parsed = urlparse(url)
+
         if parsed.scheme not in set(["http", "https"]):
+            DONOTCRAWL.add(url)
             return False
 
         if url in DONOTCRAWL or url in VISITED:
             return False
 
-        valid_domains = ( ".ics.uci.edu",".cs.uci.edu",".informatics.uci.edu",".stat.uci.edu",".today.uci.edu" )
+        # General traps
+        trap_keywords = [
+            'ical=', 'outlook-ical', 'eventdisplay=past', 'tribe-bar-date', 'action=', 'share=', 'swiki',
+            'calendar', 'event', 'events', '/?page=', '/?year=', '/?month=', '/?day=', '/?view=archive',
+            '/?sort=', 'sessionid=', 'utm_', 'replytocom=', '/html_oopsc/', '/risc/v063/html_oopsc/a\\d+\\.html',
+            '/doku', '/files/', '/papers/', '/publications/', '/pub/', 'wp-login.php'
+        ]
+        lowered_url = url.lower()
+        # If any trap keyword is found, reject the URL and add to DONOTCRAWL
+        if any(keyword in lowered_url for keyword in trap_keywords):
+            DONOTCRAWL.add(url)
+            return False
+
+        # More specified traps for "grape.ics.uci.edu"
+        if "grape.ics.uci.edu" in parsed.netloc:
+            if "/wiki/asterix/" in parsed.path:
+                DONOTCRAWL.add(url)
+                return False
+            if "timeline" in parsed.path and "from=" in parsed.query:
+                DONOTCRAWL.add(url)
+                return False
+
+        valid_domains = (".ics.uci.edu", ".cs.uci.edu", ".informatics.uci.edu", ".stat.uci.edu", ".today.uci.edu")
         
+         # Special case for a specific path
         if parsed.netloc.endswith(".today.uci.edu") and parsed.path.startswith("/department/information_computer_sciences/"):
-            return True   
+            return True  
+
         if parsed.netloc.endswith(valid_domains):
             return True
-        return False
-        
-        return not re.match(
+
+        if re.match(
             r".*\.(?:css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
             + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
@@ -228,9 +253,12 @@ def is_valid(url):
             + r"|epub|dll|cnf|tgz|sha1|thmx|mso|arff|rtf|jar|csv"
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz"
             + r"|apk|bak|tmp|log|db|mdb|manifest|map|lock"
-            + r"|sql|img|svg|heic|webp)$", parsed.path.lower())
+            + r"|sql|img|svg|heic|webp|bam|xml|ff)$", parsed.path.lower()):
+            DONOTCRAWL.add(url)
+            return False
+
+        return False
 
     except TypeError:
-        print ("TypeError for ", parsed)
+        print("TypeError for ", url)
         raise
-

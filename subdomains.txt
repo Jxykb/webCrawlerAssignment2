@@ -1,12 +1,17 @@
 Subdomains and their page counts:
 --------------------------------
-http://courselisting.ics.uci.edu: 1
-http://create.ics.uci.edu: 3
-http://dgillen.ics.uci.edu: 17
-http://duttgroup.ics.uci.edu: 99
-http://duttgroup.ics.uci.edu/wp-login.php?redirect_to=https%3a%2f%2fduttgroup.ics.uci.edu: 1
-http://nalini.ics.uci.edu: 1
-http://unite.ics.uci.edu: 1
-http://vision.ics.uci.edu: 1
-http://www.ics.uci.edu: 10
-http://www.stat.uci.edu: 4
+http://code.ics.uci.edu: 9
+http://courselisting.ics.uci.edu: 2
+http://cs.ics.uci.edu: 6
+http://dgillen.ics.uci.edu: 12
+http://jgarcia.ics.uci.edu: 29
+http://mcs.ics.uci.edu: 3
+http://mhcid.ics.uci.edu: 20
+http://mswe.ics.uci.edu: 3
+http://oai.ics.uci.edu: 1
+http://seal.ics.uci.edu: 1
+http://statconsulting.ics.uci.edu: 1
+http://ugradforms.ics.uci.edu: 1
+http://www.ics.uci.edu: 31
+http://www.informatics.uci.edu: 5
+http://www.stat.uci.edu: 5
