@@ -24,6 +24,7 @@ trap_keywords = [
     '/~eppstein/', '/covid19/' , '/doku', 'seminar-series', 'doku.php', 'seminarseries' , 'department-seminars',
     '/Nanda', '/seminar'
     ]
+    
 stopWords = [
     "a", "about", "above", "after", "again", "against", "all", "am", "an", "and", 
     "any", "are", "aren", "t", "as", "at", "be", "because", "been", "before", "being", 
@@ -135,6 +136,7 @@ def wordCountCheck(resp): #check if the given site has too little or too much in
     return len(tokens) < 200 or len(tokens) > 75000
 
 def extract_next_links(url, resp):
+    
     if resp.status != 200 or resp.raw_response is None:
         print(f"[!] Skipping {url} — Bad status or no response: {resp.status}")
         DoNotCrawl.add(url)
@@ -142,7 +144,7 @@ def extract_next_links(url, resp):
 
     content_type = resp.raw_response.headers.get('Content-Type', '').lower()
 
-    # Bail out immediately if not HTML before reading content
+    # bail out immediately if not HTML before reading content
     if 'text/html' not in content_type:
         print(f"[!] Skipping {url} — Non-HTML content: {content_type}")
         DoNotCrawl.add(url)
@@ -167,17 +169,17 @@ def extract_next_links(url, resp):
         soup = BeautifulSoup(html, "html.parser")
         for tag in soup.find_all('a', href=True):
             full_url = urljoin(url, tag['href'])
-            href = tag['href']
-            if not any(domain in href for domain in ("ics.uci.edu", "cs.uci.edu", "stat.uci.edu", "informatics.uci.edu")):
-                continue
+            # href = tag['href']
+            # if not any(domain in href for domain in ("ics.uci.edu", "cs.uci.edu", "stat.uci.edu", "informatics.uci.edu")): #if there's no links with these subdomains, move on
+            #     continue
             if is_valid(full_url):
                 found_links.add(full_url)
     except Exception as e:
         print(f"[!] BS4 error on {url}: {e}")
     finally: #memory management
-        del html
-        del soup
-        gc.collect()
+        del html #deletes html data
+        del soup #deletes soup data
+        gc.collect() #garbage collection
 
     return found_links
 
@@ -227,7 +229,7 @@ def is_valid(url):
             DoNotCrawl.add(url)
             return False
         
-        if len(url) > 300:
+        if len(url) > 300: #don't crawl urls that are too long, likely trap/infinite page loop
             DoNotCrawl.add(url)
             return False
 
