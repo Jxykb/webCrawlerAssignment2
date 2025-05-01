@@ -180,16 +180,27 @@ def is_valid(url):
 
     try:
         parsed = urlparse(url)
+        noFragUrl, _ = urldefrag(url)
+        
         if parsed.scheme not in set(["http", "https"]):
             return False
         
-        if parsed.netloc not in set(["www.ics.uci.edu", "www.cs.uci.edu", "www.stat.uci.edu", "www.informatics.uci.edu"]): #if url is not one of the subdomains
-            return False
+        valid_domains = (".ics.uci.edu", ".cs.uci.edu", ".informatics.uci.edu", ".stat.uci.edu", ".today.uci.edu")
+
+        if parsed.netloc.endswith(".today.uci.edu") and parsed.path.startswith("/department/information_computer_sciences/"):
+            return True
+
+        if parsed.netloc.endswith(valid_domains):
+            return True
 
         if not parsed.netloc.endswith("uci.edu"): #if url is outside of domain
             return False
+
+        if "grape.ics.uci.edu" in parsed.netloc:
+            DoNotCrawl.add(url)
+            return False
         
-        noFragUrl, _ = defrag(url)
+
         if noFragUrl in Visited or noFragUrl in DoNotCrawl: #if same url has fragment, dont crawl it
             return False
 
@@ -198,7 +209,8 @@ def is_valid(url):
             'ical=', 'outlook-ical', 'eventdisplay=past', 'tribe-bar-date', 'action=', 'share=', 'swiki',
             'calendar', 'event', 'events', '/?page=', '/?year=', '/?month=', '/?day=', '/?view=archive',
             '/?sort=', 'sessionid=', 'utm_', 'replytocom=', '/html_oopsc/', '/risc/v063/html_oopsc/a\\d+\\.html',
-            '/doku', '/files/', '/papers/', '/publications/', '/pub/', 'wp-login.php', '?do=edit', '?do=diff','?rev='
+            '/doku', '/files/', '/papers/', '/publications/', '/pub/', 'wp-login.php', '?do=edit', '?do=diff','?rev=',
+            '/~eppstein/'
         ]
         lowered_url = url.lower()
         # If any trap keyword is found, reject the URL and add to DONOTCRAWL
@@ -213,7 +225,7 @@ def is_valid(url):
             + r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names"
             + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
             + r"|epub|dll|cnf|tgz|sha1|"
-            + r"|thmx|mso|arff|rtf|jar|csv|sql|apk|java|xml|c"
+            + r"|thmx|mso|arff|rtf|jar|csv|sql|apk|java|xml|c|war"
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
 
     except TypeError:
