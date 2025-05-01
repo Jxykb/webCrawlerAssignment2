@@ -181,7 +181,7 @@ def is_valid(url):
     try:
         parsed = urlparse(url)
         noFragUrl, _ = urldefrag(url)
-        
+
         if parsed.scheme not in set(["http", "https"]):
             return False
         
@@ -200,7 +200,6 @@ def is_valid(url):
             DoNotCrawl.add(url)
             return False
         
-
         if noFragUrl in Visited or noFragUrl in DoNotCrawl: #if same url has fragment, dont crawl it
             return False
 
