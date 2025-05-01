@@ -1,3 +1,3 @@
 Longest page by word count:
-URL: https://grape.ics.uci.edu/wiki/public/raw-attachment/wiki/cs122b-2017-winter-project1/data.sql
-Word count: 18848
+URL: http://www.ics.uci.edu/~seal/projects/deldroid/ArchManager.apk
+Word count: 9618

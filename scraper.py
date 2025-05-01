@@ -218,7 +218,8 @@ def is_valid(url):
             'calendar', 'event', 'events', '/?page=', '/?year=', '/?month=', '/?day=', '/?view=archive',
             '/?sort=', 'sessionid=', 'utm_', 'replytocom=', '/html_oopsc/', '/risc/v063/html_oopsc/a\\d+\\.html',
             '/doku', 'doku.php', '/files/', '/papers/', '/publications/', '/pub/','wp-login.php', 'login.php', 
-            '?do=edit', '?do=diff','?rev=','/seminarseries'
+            '?do=edit', '?do=diff','?rev=','/seminarseries', 'slides/class', 'recordings/class', '~shantas/HTML/images',
+            '/pubs/'
         ]
         lowered_url = url.lower()
         # If any trap keyword is found, reject the URL and add to DONOTCRAWL
@@ -239,8 +240,8 @@ def is_valid(url):
         if "~eppstein" in parsed.path:
             if "pix" in parsed.path or "163" in parsed.path:
                 DONOTCRAWL.add(url)
-                return False            
-
+                return False
+             
         valid_domains = (".ics.uci.edu", ".cs.uci.edu", ".informatics.uci.edu", ".stat.uci.edu", ".today.uci.edu")
         
          # Special case for a specific path
@@ -260,7 +261,7 @@ def is_valid(url):
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz"
             + r"|apk|bak|tmp|log|db|mdb|manifest|map|lock|java|py"
             + r"|sql|img|svg|heic|webp|bam|xml|ff|png|pfd|ps\.z|pix"
-            + r"|ppxs|mol|ppsx|sh|apk|war)$", parsed.path.lower()):
+            + r"|ppxs|mol|ppsx|sh|apk|war|mp4)$", parsed.path.lower()):
             DONOTCRAWL.add(url)
             return False
 
