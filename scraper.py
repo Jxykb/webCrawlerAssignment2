@@ -117,7 +117,7 @@ def tokenize(resp): #tokenizer function, ignores anything that is not alphanumer
         soup = BeautifulSoup(resp.raw_response.content, "html.parser")
         text = soup.get_text()
         tokens = nltk.tokenize.word_tokenize(text)
-        word_tokens = [t.lower() for t in tokens if re.match(r'^[a-zA-Z0-9]+$', t)]
+        word_tokens = [t.lower() for t in tokens if re.match(r'^[a-zA-Z0-9]+$', t) and len(t) >= 3]
         return word_tokens
     except AttributeError:
         return []
@@ -146,7 +146,6 @@ def extract_next_links(url, resp):
 
     # bail out immediately if not HTML before reading content
     if 'text/html' not in content_type:
-        print(f"[!] Skipping {url} — Non-HTML content: {content_type}")
         DoNotCrawl.add(url)
         return set()
 
@@ -154,10 +153,13 @@ def extract_next_links(url, resp):
         print(f"[i] Already visited {url}")
         return set()
 
+    if wordCountCheck(resp):
+        DoNotCrawl.add(url)
+        return set()
+
     try:
         html = resp.raw_response.content.decode('utf-8', errors='replace')
     except Exception as e:
-        print(f"[!] Decode failed for {url}: {e}")
         DoNotCrawl.add(url)
         return set()
 
@@ -225,7 +227,7 @@ def is_valid(url):
         if not base.endswith("uci.edu"): #if url is outside of domain
             return False
 
-        if "grape.ics.uci.edu" in base or "swiki.ics.uci.edu" in base or "wics.ics.uci.edu" in base or "ngs.ics.uci.edu" in base or 'cert.ics.uci.edu' in base:
+        if "grape.ics.uci.edu" in base or "swiki.ics.uci.edu" in base or 'cert.ics.uci.edu' in base:
             DoNotCrawl.add(url)
             return False
         
